@@ -6,7 +6,7 @@ import json
 
 
 program_language = ['JavaScript', 'Java', 'Python', 'Ruby', 'PHP', 'C++', 'C#', 'C']
-vacancies_language = {}
+vacancies_language = ()
 payload = {
     # "text": "Python",
     "area": "1",
@@ -27,9 +27,10 @@ for i in program_language:
     response = requests.get(url, params=payload)
     response.raise_for_status()
     hh = response.json()['found']
-    vacancies_language[i] = hh
-for key, value in vacancies_language.items():
-    print(key, value)
+    print(i)
+#     vacancies_language[i].append(hh)
+# for key, value in vacancies_language.items():
+#     print(key, value)
 # program_language['Python'] = hh
 # print(program_language[1])
 # for i in hh:
