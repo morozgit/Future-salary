@@ -2,6 +2,8 @@ import requests
 import json
 from collections import Counter
 from terminaltables import AsciiTable
+import os
+from dotenv import load_dotenv, find_dotenv
 
 
 def predict_salary(salary_from, salary_to):
@@ -107,56 +109,59 @@ def make_tables_sj(vacancies_dictionary):
     print(table.table)
 
 
-popular_languages = ['JavaScript', 'Java', 'Python', 'Ruby', 'PHP', 'C++', 'C#', 'C']
-vacancies_language = {}
+def main():
+    sj_key = os.environ.get("SUPERJOB_KEY")
+    print(sj_key)
+    popular_languages = ['JavaScript', 'Java', 'Python', 'Ruby', 'PHP', 'C++', 'C#', 'C']
+    vacancies_language = {}
 
-payload = {
-    "area": "1",
-    "period": "30",
-    "only_with_salary": True
+    payload = {
+        "area": "1",
+        "period": "30",
+        "only_with_salary": True
+        }
+
+    for program_language in popular_languages:
+        url_hh = 'https://api.hh.ru/vacancies?text={0}'.format(program_language)
+        response = requests.get(url_hh, params=payload)
+        response.raise_for_status()
+        vacancies = response.json()['items']
+        vacancies_found = response.json()['found']
+        vacancies_processed = response.json()['per_page']
+        vacancies_language_info = {
+            'vacancies_found': vacancies_found,
+            'vacancies_processed': vacancies_processed,
+            'average_salary': predict_rub_salary_hh(vacancies),
+            'common_experience': learn_about_experience(vacancies),
+            'common_employment': learn_about_employment(vacancies),
+        }
+        vacancies_language[program_language] = vacancies_language_info
+    make_tables_hh(vacancies_language)
+
+    vacancies_language_sj = {}
+    headers_superjob = {
+        'X-Api-App-Id': sj_key,
     }
 
-for program_language in popular_languages:
-    url_hh = 'https://api.hh.ru/vacancies?text={0}'.format(program_language)
-    response = requests.get(url_hh, params=payload)
-    response.raise_for_status()
-    vacancies = response.json()['items']
-    vacancies_found = response.json()['found']
-    vacancies_processed = response.json()['per_page']
-    vacancies_language_info = {
-        'vacancies_found': vacancies_found,
-        'vacancies_processed': vacancies_processed,
-        'average_salary': predict_rub_salary_hh(vacancies),
-        'common_experience': learn_about_experience(vacancies),
-        'common_employment': learn_about_employment(vacancies),
+    payload_superjob = {
+        'town': 'Москва',
+        'count': 100,
+        'period': 0
     }
-    vacancies_language[program_language] = vacancies_language_info
-make_tables_hh(vacancies_language)
+    for program_language_sj in popular_languages:
+        url_sj = 'https://api.superjob.ru/2.0/vacancies/?keyword={0}'.format(program_language_sj)
+        response_superjob = requests.get(url_sj, headers=headers_superjob, params=payload_superjob)
+        response_superjob.raise_for_status()
+        vacancies_sj = response_superjob.json()['objects']
+        vacancies_found_sj = response_superjob.json()['total']
+        vacancies_language_info_sj = {
+            'vacancies_found': vacancies_found_sj,
+            'vacancies_processed': payload_superjob['count'],
+            'average_salary': predict_rub_salary_sj(vacancies_sj),
+        }
+        vacancies_language_sj[program_language_sj] = vacancies_language_info_sj
+    make_tables_sj(vacancies_language_sj)
 
 
-vacancies_language_sj = {}
-headers_superjob = {
-    'X-Api-App-Id': 'v3.r.137607251.df77642eb68e4b4b46da5d068879be4074f84b7d.6c814ae2df04a6e77f5fe989615bbe172a3317b2',
-}
-
-payload_superjob = {
-    'town': 'Москва',
-    'count': 100,
-    'period': 0
-}
-for program_language_sj in popular_languages:
-    url_sj = 'https://api.superjob.ru/2.0/vacancies/?keyword={0}'.format(program_language_sj)
-    response_superjob = requests.get(url_sj, headers=headers_superjob, params=payload_superjob)
-    response_superjob.raise_for_status()
-    s = response_superjob.json()
-    vacancies_sj = response_superjob.json()['objects']
-    vacancies_found_sj = response_superjob.json()['total']
-    vacancies_language_info_sj = {
-        'vacancies_found': vacancies_found_sj,
-        'vacancies_processed': payload_superjob['count'],
-        'average_salary': predict_rub_salary_sj(vacancies_sj),
-    }
-    vacancies_language_sj[program_language_sj] = vacancies_language_info_sj
-make_tables_sj(vacancies_language_sj)
-
-
+if __name__ == '__main__':
+    main()
