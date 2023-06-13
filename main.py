@@ -110,8 +110,8 @@ def make_tables_sj(vacancies_dictionary):
 
 
 def main():
+    load_dotenv(find_dotenv())
     sj_key = os.environ.get("SUPERJOB_KEY")
-    print(sj_key)
     popular_languages = ['JavaScript', 'Java', 'Python', 'Ruby', 'PHP', 'C++', 'C#', 'C']
     vacancies_language = {}
 
