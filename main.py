@@ -131,25 +131,25 @@ def main():
             response = requests.get(url_hh, params=payload)
             response.raise_for_status()
             vacancies_hh.append(response.json())
-            print(program_language, page)
+            for vacancy_hh in vacancies_hh:
+                vacancies_items = vacancy_hh['items']
+                vacancies_found = vacancy_hh['found']
+                vacancies_processed = vacancy_hh['per_page']
+                vacancies_hh_info = {
+                    'vacancies_found': vacancies_found,
+                    'vacancies_processed': vacancies_processed,
+                    'average_salary': predict_rub_salary_hh(vacancies_items),
+                    'common_experience': learn_about_experience(vacancies_items),
+                    'common_employment': learn_about_employment(vacancies_items),
+                }
+                vacancies_language[program_language] = vacancies_hh_info
+        # print(vacancies_language)
+        
         if page >= page_payload['pages_number']:
             break
+    print(make_table_hh(vacancies_language))
     
-    for vacancy_hh in vacancies_hh:
-        for program_language in popular_languages:
-            vacancies_items = vacancy_hh['items']
-            vacancies_found = vacancy_hh['found']
-            vacancies_processed = vacancy_hh['per_page']
-            vacancies_hh_info = {
-                'vacancies_found': vacancies_found,
-                'vacancies_processed': vacancies_processed,
-                'average_salary': predict_rub_salary_hh(vacancies_items),
-                'common_experience': learn_about_experience(vacancies_items),
-                'common_employment': learn_about_employment(vacancies_items),
-            }
-            vacancies_language[program_language] = vacancies_hh_info
-            print(vacancies_language)
-            print(make_table_hh(vacancies_language))
+        
 
     # vacancies_language_sj = {}
     # headers_superjob = {
