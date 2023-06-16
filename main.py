@@ -114,14 +114,14 @@ def main():
     load_dotenv(find_dotenv())
     sj_key = os.environ.get("SUPERJOB_KEY")
     popular_languages = ['JavaScript', 'Java', 'Python', 'Ruby', 'PHP', 'C++', 'C#', 'C']
-    vacancies_language = {}
-    vacancies_hh = []
+    vacancies_language_hh = {}
+    vacancies_hh = {}
     moskva_id = 1
     amount_of_days = 30
-    max_pages = 2
+    max_pages_hh = 20
     for page in count(0):
         for program_language in popular_languages:
-            page_payload = {'pages_number': max_pages, 'page': page}
+            page_payload_hh = {'pages_number': max_pages_hh, 'page': page}
             payload = {
                 'area': moskva_id,
                 'period': amount_of_days,
@@ -130,54 +130,61 @@ def main():
             url_hh = 'https://api.hh.ru/vacancies'
             response = requests.get(url_hh, params=payload)
             response.raise_for_status()
-            vacancies_hh.append(response.json())
-            for vacancy_hh in vacancies_hh:
-                vacancies_items = vacancy_hh['items']
-                vacancies_found = vacancy_hh['found']
-                vacancies_processed = vacancy_hh['per_page']
-                vacancies_hh_info = {
-                    'vacancies_found': vacancies_found,
-                    'vacancies_processed': vacancies_processed,
-                    'average_salary': predict_rub_salary_hh(vacancies_items),
-                    'common_experience': learn_about_experience(vacancies_items),
-                    'common_employment': learn_about_employment(vacancies_items),
-                }
-                vacancies_language[program_language] = vacancies_hh_info
-        # print(vacancies_language)
-        
-        if page >= page_payload['pages_number']:
+            vacancies_hh[program_language] = response.json()
+        if page >= page_payload_hh['pages_number']:
             break
-    print(make_table_hh(vacancies_language))
-    
-        
+    for vacancy_hh_key, vacancy_hh_value in vacancies_hh.items():
+        vacancies_items = vacancy_hh_value['items']
+        vacancies_found = vacancy_hh_value['found']
+        vacancies_processed = vacancy_hh_value['pages']*vacancy_hh_value['per_page']
+        vacancies_hh_info = {
+            'vacancies_found': vacancies_found,
+            'vacancies_processed': vacancies_processed,
+            'average_salary': predict_rub_salary_hh(vacancies_items),
+            'common_experience': learn_about_experience(vacancies_items),
+            'common_employment': learn_about_employment(vacancies_items),
+        }
+        vacancies_language_hh[vacancy_hh_key] = vacancies_hh_info
+    print(make_table_hh(vacancies_language_hh))
 
-    # vacancies_language_sj = {}
-    # headers_superjob = {
-    #     'X-Api-App-Id': sj_key,
-    # }
+    vacancies_language_sj = {}
+    vacancies_sj = {}
+    headers_sj = {
+        'X-Api-App-Id': sj_key,
+    }
 
-    # publication_period = 0  #all time
-    # max_number_of_results = 100
-    # for program_language_sj in popular_languages:
-    #     payload_superjob = {
-    #         'town': 'Москва',
-    #         'count': max_number_of_results,
-    #         'period': publication_period,
-    #         'keyword': program_language_sj
-    #     }
-    #     url_sj = 'https://api.superjob.ru/2.0/vacancies'
-    #     response_superjob = requests.get(url_sj, headers=headers_superjob, params=payload_superjob)
-    #     response_superjob.raise_for_status()
-    #     vacancies_sj = response_superjob.json()
-    #     vacancies_sj_objects = vacancies_sj['objects']
-    #     vacancies_found_sj = vacancies_sj['total']
-    #     vacancies_sj_info_ = {
-    #         'vacancies_found': vacancies_found_sj,
-    #         'vacancies_processed': payload_superjob['count'],
-    #         'average_salary': predict_rub_salary_sj(vacancies_sj_objects),
-    #     }
-    #     vacancies_language_sj[program_language_sj] = vacancies_sj_info_
-    # print(make_table_sj(vacancies_language_sj))
+    publication_period = 0  # 0- all time
+    max_number_of_results = 100
+    max_pages_sj = 5
+    for page in count(0):
+        for program_language_sj in popular_languages:
+            page_payload_sj = {'pages_number': max_pages_sj, 'page': page}
+            payload_sj = {
+                'town': 'Москва',
+                'count': max_number_of_results,
+                'period': publication_period,
+                'keyword': program_language_sj
+            }
+            url_sj = 'https://api.superjob.ru/2.0/vacancies'
+            response_sj = requests.get(
+                url_sj,
+                headers=headers_sj,
+                params=payload_sj
+                )
+            response_sj.raise_for_status()
+            vacancies_sj[program_language_sj] = response_sj.json()
+        if page >= page_payload_sj['pages_number']:
+            break
+    for vacancy_sj_key, vacancy_sj_value in vacancies_sj.items():
+        vacancies_sj_objects = vacancy_sj_value['objects']
+        vacancies_found_sj = vacancy_sj_value['total']
+        vacancies_sj_info_ = {
+            'vacancies_found': vacancies_found_sj,
+            'vacancies_processed': payload_sj['count'],
+            'average_salary': predict_rub_salary_sj(vacancies_sj_objects),
+        }
+        vacancies_language_sj[vacancy_sj_key] = vacancies_sj_info_
+    print(make_table_sj(vacancies_language_sj))
 
 
 if __name__ == '__main__':
