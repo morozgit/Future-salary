@@ -1,3 +1,5 @@
+import json
+
 import requests
 from collections import Counter
 from terminaltables import AsciiTable
@@ -27,9 +29,9 @@ def predict_rub_salary_hh(vacancies_hh):
             average_salary_hh += predict_salary(salary_from_hh, salary_to_hh)
             count_vacancy += 1
     try:
-        return average_salary_hh // count_vacancy
+        return count_vacancy ,average_salary_hh // count_vacancy
     except ZeroDivisionError:
-        return 'Salary didn`t find'
+        return count_vacancy, 'Salary didn`t find'
 
 
 def predict_rub_salary_sj(vacancies_sj):
@@ -41,9 +43,9 @@ def predict_rub_salary_sj(vacancies_sj):
         average_salary_sj += predict_salary(salary_from_sj, salary_to_sj)
         count_vacancy += 1
     try:
-        return average_salary_sj // count_vacancy
+        return count_vacancy, average_salary_sj // count_vacancy
     except ZeroDivisionError:
-        return 'Salary didn`t find'
+        return count_vacancy, 'Salary didn`t find'
 
 
 def make_table_hh(vacancies_hh):
@@ -101,6 +103,7 @@ def main():
     moskva_id = 1
     amount_of_days = 30
     max_pages_hh = 20
+    count_vacancies_hh_with_salary = 0
     for page in count(0):
         for program_language in popular_languages:
             page_payload_hh = {'pages_number': max_pages_hh, 'page': page}
@@ -109,27 +112,21 @@ def main():
                 'period': amount_of_days,
                 'text': program_language,
             }
-            try:
-                url_hh = 'https://api.hh.ru/vacancies'
-                response = requests.get(url_hh, params=payload)
-                response.raise_for_status()
-            except requests.exceptions.HTTPError as err:
-                response_captcha = requests.post(err.response.json()['errors'][0]['captcha_url'] + '&backurl=' + url_hh +'&text=' + program_language)
-                print(response_captcha)
-                #  print(err.response.json()['errors'][0]['captcha_url'] + '&backurl=' + url_hh +'&text=' + program_language)
-
-            # vacancies_hh[program_language] = response.json()
+            url_hh = 'https://api.hh.ru/vacancies'
+            response = requests.get(url_hh, params=payload)
+            response.raise_for_status()
             vacancies_hh.append([program_language, response.json()])
         if page >= page_payload_hh['pages_number']:
             break
     for language, vacancy_hh_information in vacancies_hh:
-        # print(vacancy_hh_key, vacancy_hh_value)
         vacancies_items = vacancy_hh_information['items']
         vacancies_found = vacancy_hh_information['found']
-        vacancies_processed = vacancy_hh_information['pages']*vacancy_hh_information['per_page']
+        for vacancies_hh_with_salary in vacancies_items:
+            if vacancies_hh_with_salary['salary']:
+                count_vacancies_hh_with_salary += 1
         vacancies_hh_info = {
             'vacancies_found': vacancies_found,
-            'vacancies_processed': vacancies_processed,
+            'vacancies_processed': count_vacancies_hh_with_salary,
             'average_salary': predict_rub_salary_hh(vacancies_items),
         }
         vacancies_language_hh[language] = vacancies_hh_info
@@ -144,6 +141,7 @@ def main():
     publication_period = 0  # 0- all time
     max_number_of_results = 100
     max_pages_sj = 5
+    count_vacancies_sj_with_salary = 0
     for page in count(0):
         for program_language_sj in popular_languages:
             page_payload_sj = {'pages_number': max_pages_sj, 'page': page}
@@ -163,13 +161,16 @@ def main():
             vacancies_sj.append([program_language_sj, response_sj.json()])
         if page >= page_payload_sj['pages_number']:
             break
+    with open('sj.txt', 'w') as file:
+        json.dump(vacancies_sj, file)
     for language, vacancy_hh_information in vacancies_sj:
         vacancies_sj_objects = vacancy_hh_information['objects']
         vacancies_found_sj = vacancy_hh_information['total']
+        vacancies_processed, average_salary = predict_rub_salary_sj(vacancies_sj_objects)
         vacancies_sj_info_ = {
             'vacancies_found': vacancies_found_sj,
-            'vacancies_processed': payload_sj['count'],
-            'average_salary': predict_rub_salary_sj(vacancies_sj_objects),
+            'vacancies_processed': vacancies_processed,
+            'average_salary': average_salary,
         }
         vacancies_language_sj[language] = vacancies_sj_info_
     print(make_table_sj(vacancies_language_sj))
