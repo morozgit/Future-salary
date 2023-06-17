@@ -32,20 +32,6 @@ def predict_rub_salary_hh(vacancies_hh):
         return 'Salary didn`t find'
 
 
-def learn_about_experience(vacancies):
-    vacancies_experience = []
-    for vacancy in vacancies:
-        vacancies_experience.append(vacancy['experience']['name'])
-    return Counter(vacancies_experience).most_common(1)[0][0]
-
-
-def learn_about_employment(vacancies):
-    vacancies_employment = []
-    for vacancy in vacancies:
-        vacancies_employment.append(vacancy['employment']['name'])
-    return Counter(vacancies_employment).most_common(1)[0][0]
-
-
 def predict_rub_salary_sj(vacancies_sj):
     count_vacancy = 0
     average_salary_sj = 0
@@ -141,8 +127,6 @@ def main():
             'vacancies_found': vacancies_found,
             'vacancies_processed': vacancies_processed,
             'average_salary': predict_rub_salary_hh(vacancies_items),
-            'common_experience': learn_about_experience(vacancies_items),
-            'common_employment': learn_about_employment(vacancies_items),
         }
         vacancies_language_hh[vacancy_hh_key] = vacancies_hh_info
     print(make_table_hh(vacancies_language_hh))
