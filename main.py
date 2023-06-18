@@ -29,9 +29,9 @@ def predict_rub_salary_hh(vacancies_hh):
             average_salary_hh += predict_salary(salary_from_hh, salary_to_hh)
             count_vacancy += 1
     try:
-        return average_salary_hh // count_vacancy
+        return count_vacancy, average_salary_hh // count_vacancy
     except ZeroDivisionError:
-        return 'Salary didn`t find'
+        return count_vacancy, 'Salary didn`t find'
 
 
 def predict_rub_salary_sj(vacancies_sj):
@@ -103,9 +103,8 @@ def main():
     moskva_id = 1
     amount_of_days = 30
     max_pages_hh = 20
-    count_vacancies_hh_with_salary = 0
-    for page in count(0):
-        for program_language in popular_languages:
+    for program_language in popular_languages:
+        for page in count(0):
             page_payload_hh = {'pages_number': max_pages_hh, 'page': page}
             payload = {
                 'area': moskva_id,
@@ -116,18 +115,16 @@ def main():
             response = requests.get(url_hh, params=payload)
             response.raise_for_status()
             vacancies_hh.append([program_language, response.json()])
-        if page >= page_payload_hh['pages_number']:
-            break
+            if page >= page_payload_hh['pages_number']:
+                break
     for language, vacancy_hh_description in vacancies_hh:
         vacancies_items = vacancy_hh_description['items']
         vacancies_found = vacancy_hh_description['found']
-        for vacancies_hh_with_salary in vacancies_items:
-            if vacancies_hh_with_salary['salary']:
-                count_vacancies_hh_with_salary += 1
+        vacancies_processed, average_salary = predict_rub_salary_hh(vacancies_items)
         salary_hh_statistics = {
             'vacancies_found': vacancies_found,
-            'vacancies_processed': count_vacancies_hh_with_salary,
-            'average_salary': predict_rub_salary_hh(vacancies_items),
+            'vacancies_processed': vacancies_processed,
+            'average_salary': average_salary,
         }
         vacancies_language_hh[language] = salary_hh_statistics
     print(make_table_hh(vacancies_language_hh))
@@ -141,9 +138,9 @@ def main():
     publication_period = 0  # 0- all time
     max_number_of_results = 100
     max_pages_sj = 5
-    count_vacancies_sj_with_salary = 0
-    for page in count(0):
-        for program_language_sj in popular_languages:
+
+    for program_language_sj in popular_languages:
+        for page in count(0):
             page_payload_sj = {'pages_number': max_pages_sj, 'page': page}
             payload_sj = {
                 'town': 'Москва',
@@ -159,10 +156,8 @@ def main():
                 )
             response_sj.raise_for_status()
             vacancies_sj.append([program_language_sj, response_sj.json()])
-        if page >= page_payload_sj['pages_number']:
-            break
-    with open('sj.txt', 'w') as file:
-        json.dump(vacancies_sj, file)
+            if page >= page_payload_sj['pages_number']:
+                break
     for language, vacancy_sj_description in vacancies_sj:
         vacancies_sj_objects = vacancy_sj_description['objects']
         vacancies_found_sj = vacancy_sj_description['total']
