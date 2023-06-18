@@ -29,9 +29,9 @@ def predict_rub_salary_hh(vacancies_hh):
             average_salary_hh += predict_salary(salary_from_hh, salary_to_hh)
             count_vacancy += 1
     try:
-        return count_vacancy ,average_salary_hh // count_vacancy
+        return average_salary_hh // count_vacancy
     except ZeroDivisionError:
-        return count_vacancy, 'Salary didn`t find'
+        return 'Salary didn`t find'
 
 
 def predict_rub_salary_sj(vacancies_sj):
@@ -49,16 +49,16 @@ def predict_rub_salary_sj(vacancies_sj):
 
 
 def make_table_hh(vacancies_hh):
-    table_hh = []
+    vacancies_hh_table = []
     table_headers = [
         'Язык программирования',
         'Вакансий найдено',
         'Вакансий обработано',
         'Средняя зарплата',
         ]
-    table_hh.append(table_headers)
+    vacancies_hh_table.append(table_headers)
     for language, vacancy_information in vacancies_hh.items():
-        table_hh.append(
+        vacancies_hh_table.append(
             [
                 language,
                 vacancy_information.get('vacancies_found'),
@@ -66,22 +66,22 @@ def make_table_hh(vacancies_hh):
                 vacancy_information.get('average_salary'),
             ]
         )
-    table = AsciiTable(table_hh)
+    table = AsciiTable(vacancies_hh_table)
     table.title = 'HeadHunter Moscow'
     return table.table
 
 
 def make_table_sj(vacancies_sj):
-    table_data = []
+    vacancies_sj_table = []
     table_headers = [
         'Язык программирования',
         'Вакансий найдено',
         'Вакансий обработано',
         'Средняя зарплата',
         ]
-    table_data.append(table_headers)
+    vacancies_sj_table.append(table_headers)
     for language, vacancy_information in vacancies_sj.items():
-        table_data.append(
+        vacancies_sj_table.append(
             [
                 language,
                 vacancy_information.get('vacancies_found'),
@@ -89,7 +89,7 @@ def make_table_sj(vacancies_sj):
                 vacancy_information.get('average_salary'),
             ]
         )
-    table = AsciiTable(table_data)
+    table = AsciiTable(vacancies_sj_table)
     table.title = 'SuperJob Moscow'
     return table.table
 
@@ -118,18 +118,18 @@ def main():
             vacancies_hh.append([program_language, response.json()])
         if page >= page_payload_hh['pages_number']:
             break
-    for language, vacancy_hh_information in vacancies_hh:
-        vacancies_items = vacancy_hh_information['items']
-        vacancies_found = vacancy_hh_information['found']
+    for language, vacancy_hh_description in vacancies_hh:
+        vacancies_items = vacancy_hh_description['items']
+        vacancies_found = vacancy_hh_description['found']
         for vacancies_hh_with_salary in vacancies_items:
             if vacancies_hh_with_salary['salary']:
                 count_vacancies_hh_with_salary += 1
-        vacancies_hh_info = {
+        salary_hh_statistics = {
             'vacancies_found': vacancies_found,
             'vacancies_processed': count_vacancies_hh_with_salary,
             'average_salary': predict_rub_salary_hh(vacancies_items),
         }
-        vacancies_language_hh[language] = vacancies_hh_info
+        vacancies_language_hh[language] = salary_hh_statistics
     print(make_table_hh(vacancies_language_hh))
 
     vacancies_language_sj = {}
@@ -163,16 +163,16 @@ def main():
             break
     with open('sj.txt', 'w') as file:
         json.dump(vacancies_sj, file)
-    for language, vacancy_hh_information in vacancies_sj:
-        vacancies_sj_objects = vacancy_hh_information['objects']
-        vacancies_found_sj = vacancy_hh_information['total']
+    for language, vacancy_sj_description in vacancies_sj:
+        vacancies_sj_objects = vacancy_sj_description['objects']
+        vacancies_found_sj = vacancy_sj_description['total']
         vacancies_processed, average_salary = predict_rub_salary_sj(vacancies_sj_objects)
-        vacancies_sj_info_ = {
+        salary_sj_statistics = {
             'vacancies_found': vacancies_found_sj,
             'vacancies_processed': vacancies_processed,
             'average_salary': average_salary,
         }
-        vacancies_language_sj[language] = vacancies_sj_info_
+        vacancies_language_sj[language] = salary_sj_statistics
     print(make_table_sj(vacancies_language_sj))
 
 
