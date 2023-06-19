@@ -1,11 +1,9 @@
-import json
+import os
+from itertools import count
 
 import requests
-from collections import Counter
+from dotenv import find_dotenv, load_dotenv
 from terminaltables import AsciiTable
-import os
-from dotenv import load_dotenv, find_dotenv
-from itertools import count
 
 
 def predict_salary(salary_from, salary_to):
