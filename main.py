@@ -103,6 +103,7 @@ def main():
     moskva_id = 1
     amount_of_days = 30
     max_pages_hh = 20
+    amount_of_vacancies_on_page = 100
     for program_language in popular_languages:
         for page in count(0):
             page_payload_hh = {'pages_number': max_pages_hh, 'page': page}
@@ -110,6 +111,7 @@ def main():
                 'area': moskva_id,
                 'period': amount_of_days,
                 'text': program_language,
+                'per_page': amount_of_vacancies_on_page
             }
             url_hh = 'https://api.hh.ru/vacancies'
             response = requests.get(url_hh, params=payload)
