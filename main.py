@@ -18,32 +18,32 @@ def predict_salary(salary_from, salary_to):
 
 
 def predict_rub_salary_hh(vacancies_hh):
-    count_vacancy = 0
+    vacancy_count = 0
     average_salary_hh = 0
     for vacancy_hh in vacancies_hh:
         if vacancy_hh['salary']:
             salary_from_hh = vacancy_hh['salary']['from']
             salary_to_hh = vacancy_hh['salary']['to']
             average_salary_hh += predict_salary(salary_from_hh, salary_to_hh)
-            count_vacancy += 1
+            vacancy_count += 1
     try:
-        return count_vacancy, average_salary_hh // count_vacancy
+        return vacancy_count, average_salary_hh // vacancy_count
     except ZeroDivisionError:
-        return count_vacancy, 'Salary didn`t find'
+        return vacancy_count, 'Salary didn`t find'
 
 
 def predict_rub_salary_sj(vacancies_sj):
-    count_vacancy = 0
+    vacancy_count = 0
     average_salary_sj = 0
     for vacancy_sj in vacancies_sj:
         salary_from_sj = vacancy_sj['payment_from']
         salary_to_sj = vacancy_sj['payment_to']
         average_salary_sj += predict_salary(salary_from_sj, salary_to_sj)
-        count_vacancy += 1
+        vacancy_count += 1
     try:
-        return count_vacancy, average_salary_sj // count_vacancy
+        return vacancy_count, average_salary_sj // vacancy_count
     except ZeroDivisionError:
-        return count_vacancy, 'Salary didn`t find'
+        return vacancy_count, 'Salary didn`t find'
 
 
 def make_table_hh(vacancies_hh):
