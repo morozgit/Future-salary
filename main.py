@@ -93,7 +93,8 @@ def main():
                 'area': moskva_id,
                 'period': amount_of_days,
                 'text': program_language,
-                'per_page': amount_of_vacancies_on_page
+                'per_page': amount_of_vacancies_on_page,
+                'page': page
             }
             url_hh = 'https://api.hh.ru/vacancies'
             response = requests.get(url_hh, headers=headers_hh, params=payload)
@@ -130,7 +131,8 @@ def main():
                 'town': 'Москва',
                 'count': max_number_of_results,
                 'period': publication_period,
-                'keyword': program_language_sj
+                'keyword': program_language_sj,
+                'page': page
             }
             url_sj = 'https://api.superjob.ru/2.0/vacancies'
             response_sj = requests.get(
