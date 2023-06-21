@@ -102,9 +102,9 @@ def main():
             vacancies_hh.append(response.json())
             if page >= max_pages_hh:
                 break
-        for vacancy_hh_description in vacancies_hh:
-            vacancies_items = vacancy_hh_description['items']
-            vacancies_found = vacancy_hh_description['found']
+        for page_with_hh_vacancies in vacancies_hh:
+            vacancies_items = page_with_hh_vacancies['items']
+            vacancies_found = page_with_hh_vacancies['found']
             vacancies_processed, average_salary = predict_rub_salary_hh(vacancies_items)
             salary_hh_statistics = {
                 'vacancies_found': vacancies_found,
@@ -144,9 +144,9 @@ def main():
             vacancies_sj.append(response_sj.json())
             if page >= max_pages_sj:
                 break
-        for vacancy_sj_description in vacancies_sj:
-            vacancies_sj_objects = vacancy_sj_description['objects']
-            vacancies_found_sj = vacancy_sj_description['total']
+        for page_with_sj_vacancies in vacancies_sj:
+            vacancies_sj_objects = page_with_sj_vacancies['objects']
+            vacancies_found_sj = page_with_sj_vacancies['total']
             vacancies_processed, average_salary = predict_rub_salary_sj(vacancies_sj_objects)
             salary_sj_statistics = {
                 'vacancies_found': vacancies_found_sj,
