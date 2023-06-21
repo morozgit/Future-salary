@@ -27,11 +27,11 @@ def predict_rub_salary_hh(vacancies_hh):
             salary_to_hh = vacancy_hh['salary']['to']
             salaries_hh += predict_salary(salary_from_hh, salary_to_hh)
             vacancy_count_hh += 1
-    average_salary_hh = salaries_hh // vacancy_count_hh
     try:
-        return vacancy_count_hh, average_salary_hh
+        average_salary_hh = salaries_hh // vacancy_count_hh
     except ZeroDivisionError:
-        return vacancy_count_hh, 'Salary didn`t find'
+        return vacancy_count_hh, 0
+    return vacancy_count_hh, average_salary_hh
 
 
 def predict_rub_salary_sj(vacancies_sj):
@@ -42,24 +42,24 @@ def predict_rub_salary_sj(vacancies_sj):
         salary_to_sj = vacancy_sj['payment_to']
         salaries_sj += predict_salary(salary_from_sj, salary_to_sj)
         vacancy_count_sj += 1
-    average_salary_sj = salaries_sj // vacancy_count_sj
     try:
-        return vacancy_count_sj, average_salary_sj
+        average_salary_sj = salaries_sj // vacancy_count_sj
     except ZeroDivisionError:
-        return vacancy_count_sj, 'Salary didn`t find'
+        return vacancy_count_sj, 0
+    return vacancy_count_sj, average_salary_sj
 
 
 def make_table(vacancies, title):
-    vacancies_sj_table = []
+    vacancies_table = []
     table_headers = [
         'Язык программирования',
         'Вакансий найдено',
         'Вакансий обработано',
         'Средняя зарплата',
         ]
-    vacancies_sj_table.append(table_headers)
+    vacancies_table.append(table_headers)
     for language, vacancy_information in vacancies.items():
-        vacancies_sj_table.append(
+        vacancies_table.append(
             [
                 language,
                 vacancy_information.get('vacancies_found'),
@@ -67,7 +67,7 @@ def make_table(vacancies, title):
                 vacancy_information.get('average_salary'),
             ]
         )
-    table = AsciiTable(vacancies_sj_table)
+    table = AsciiTable(vacancies_table)
     table.title = title
     return table.table
 
@@ -88,6 +88,9 @@ def main():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
     for program_language in popular_languages:
+        vacancies_hh_found = 0
+        average_hh_salary = 0
+        vacancies_hh_processed = 0
         for page in count(0):
             payload = {
                 'area': moskva_id,
@@ -102,17 +105,19 @@ def main():
             vacancies_hh.append(response.json())
             if page >= max_pages_hh:
                 break
+            time.sleep(2)
         for page_with_hh_vacancies in vacancies_hh:
             vacancies_items = page_with_hh_vacancies['items']
-            vacancies_found = page_with_hh_vacancies['found']
-            vacancies_processed, average_salary = predict_rub_salary_hh(vacancies_items)
-            salary_hh_statistics = {
-                'vacancies_found': vacancies_found,
-                'vacancies_processed': vacancies_processed,
-                'average_salary': average_salary,
+            vacancies_hh_found += page_with_hh_vacancies['found']
+            vacancies_hh_processed += predict_rub_salary_hh(vacancies_items)[0]
+            average_hh_salary += int(predict_rub_salary_hh(vacancies_items)[1])
+        salary_hh_statistics = {
+                'vacancies_found': vacancies_hh_found,
+                'vacancies_processed': vacancies_hh_processed,
+                'average_salary': average_hh_salary // page,
             }
-            vacancies_language_hh[program_language] = salary_hh_statistics
-            time.sleep(2)
+        vacancies_language_hh[program_language] = salary_hh_statistics
+
     print(make_table(vacancies_language_hh, title_hh))
 
     vacancies_language_sj = {}
@@ -126,6 +131,9 @@ def main():
     max_pages_sj = 5
 
     for program_language_sj in popular_languages:
+        vacancies_sj_found = 0
+        average_sj_salary = 0
+        vacancies_sj_processed = 0
         for page in count(0):
             payload_sj = {
                 'town': 'Москва',
@@ -146,14 +154,15 @@ def main():
                 break
         for page_with_sj_vacancies in vacancies_sj:
             vacancies_sj_objects = page_with_sj_vacancies['objects']
-            vacancies_found_sj = page_with_sj_vacancies['total']
-            vacancies_processed, average_salary = predict_rub_salary_sj(vacancies_sj_objects)
-            salary_sj_statistics = {
-                'vacancies_found': vacancies_found_sj,
-                'vacancies_processed': vacancies_processed,
-                'average_salary': average_salary,
-            }
-            vacancies_language_sj[program_language_sj] = salary_sj_statistics
+            vacancies_sj_found += page_with_sj_vacancies['total']
+            vacancies_sj_processed += predict_rub_salary_sj(vacancies_sj_objects)[0]
+            average_sj_salary += int(predict_rub_salary_sj(vacancies_sj_objects)[1])
+        salary_sj_statistics = {
+            'vacancies_found': vacancies_sj_found,
+            'vacancies_processed': vacancies_sj_processed,
+            'average_salary': average_sj_salary // page,
+        }
+        vacancies_language_sj[program_language_sj] = salary_sj_statistics
     print(make_table(vacancies_language_sj, title_sj))
 
 
