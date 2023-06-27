@@ -91,6 +91,7 @@ def main():
         vacancies_hh_found = 0
         average_hh_salary = 0
         vacancies_hh_processed = 0
+        vacancies_hh.clear()
         for page in count(0):
             payload = {
                 'area': moskva_id,
@@ -134,6 +135,7 @@ def main():
         vacancies_sj_found = 0
         average_sj_salary = 0
         vacancies_sj_processed = 0
+        vacancies_sj.clear()
         for page in count(0):
             payload_sj = {
                 'town': 'Москва',
