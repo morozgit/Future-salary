@@ -18,35 +18,20 @@ def predict_salary(salary_from, salary_to):
         return 0
 
 
-def predict_rub_salary_hh(vacancies_hh):
-    vacancy_count_hh = 0
+def predict_rub_salary_hh(vacancy_hh):
     salaries_hh = 0
-    for vacancy_hh in vacancies_hh:
-        if vacancy_hh['salary']:
-            salary_from_hh = vacancy_hh['salary']['from']
-            salary_to_hh = vacancy_hh['salary']['to']
-            salaries_hh += predict_salary(salary_from_hh, salary_to_hh)
-            vacancy_count_hh += 1
-    try:
-        average_salary_hh = salaries_hh // vacancy_count_hh
-    except ZeroDivisionError:
-        return vacancy_count_hh, 0
-    return vacancy_count_hh, average_salary_hh
+    salary_from_hh = vacancy_hh['salary']['from']
+    salary_to_hh = vacancy_hh['salary']['to']
+    salaries_hh = predict_salary(salary_from_hh, salary_to_hh)
+    return salaries_hh
 
 
-def predict_rub_salary_sj(vacancies_sj):
-    vacancy_count_sj = 0
+def predict_rub_salary_sj(vacancy_sj):
     salaries_sj = 0
-    for vacancy_sj in vacancies_sj:
-        salary_from_sj = vacancy_sj['payment_from']
-        salary_to_sj = vacancy_sj['payment_to']
-        salaries_sj += predict_salary(salary_from_sj, salary_to_sj)
-        vacancy_count_sj += 1
-    try:
-        average_salary_sj = salaries_sj // vacancy_count_sj
-    except ZeroDivisionError:
-        return vacancy_count_sj, 0
-    return vacancy_count_sj, average_salary_sj
+    salary_from_sj = vacancy_sj['payment_from']
+    salary_to_sj = vacancy_sj['payment_to']
+    salaries_sj = predict_salary(salary_from_sj, salary_to_sj)
+    return salaries_sj
 
 
 def make_table(vacancies, title):
@@ -78,6 +63,7 @@ def main():
     popular_languages = ['JavaScript', 'Java', 'Python', 'Ruby', 'PHP', 'C++', 'C#', 'C']
     vacancies_language_hh = {}
     vacancies_hh = []
+    salaries_hh = []
     moskva_id = 1
     amount_of_days = 30
     max_pages_hh = 20
@@ -92,6 +78,7 @@ def main():
         average_hh_salary = 0
         vacancies_hh_processed = 0
         vacancies_hh.clear()
+        salaries_hh.clear()
         for page in count(0):
             payload = {
                 'area': moskva_id,
@@ -109,13 +96,19 @@ def main():
             time.sleep(2)
         for page_with_hh_vacancies in vacancies_hh:
             vacancies_items = page_with_hh_vacancies['items']
-            vacancies_hh_found += page_with_hh_vacancies['found']
-            vacancies_hh_processed += predict_rub_salary_hh(vacancies_items)[0]
-            average_hh_salary += int(predict_rub_salary_hh(vacancies_items)[1])
+            vacancies_hh_found = page_with_hh_vacancies['found']
+            for vacancy_hh in vacancies_items:
+                if vacancy_hh['salary']:
+                    salaries_hh.append(predict_rub_salary_hh(vacancy_hh))
+        try:
+            average_hh_salary = sum(salaries_hh) // len(salaries_hh)
+        except ZeroDivisionError:
+            average_hh_salary = 0
+        vacancies_hh_processed = len(salaries_hh)
         salary_hh_statistics = {
                 'vacancies_found': vacancies_hh_found,
                 'vacancies_processed': vacancies_hh_processed,
-                'average_salary': average_hh_salary // page,
+                'average_salary': average_hh_salary,
             }
         vacancies_language_hh[program_language] = salary_hh_statistics
 
@@ -123,6 +116,7 @@ def main():
 
     vacancies_language_sj = {}
     vacancies_sj = []
+    salaries_sj = []
     headers_sj = {
         'X-Api-App-Id': sj_key,
     }
@@ -136,6 +130,7 @@ def main():
         average_sj_salary = 0
         vacancies_sj_processed = 0
         vacancies_sj.clear()
+        salaries_sj.clear()
         for page in count(0):
             payload_sj = {
                 'town': 'Москва',
@@ -156,13 +151,19 @@ def main():
                 break
         for page_with_sj_vacancies in vacancies_sj:
             vacancies_sj_objects = page_with_sj_vacancies['objects']
-            vacancies_sj_found += page_with_sj_vacancies['total']
-            vacancies_sj_processed += predict_rub_salary_sj(vacancies_sj_objects)[0]
-            average_sj_salary += int(predict_rub_salary_sj(vacancies_sj_objects)[1])
+            vacancies_sj_found = page_with_sj_vacancies['total']
+            for vacancy_sj in vacancies_sj_objects:
+                if vacancy_sj['payment_from'] != 0 or vacancy_sj['payment_to'] != 0:
+                    salaries_sj.append(predict_rub_salary_sj(vacancy_sj))
+        try:
+            average_sj_salary = sum(salaries_sj) // len(salaries_sj)
+        except ZeroDivisionError:
+            average_sj_salary = 0
+        vacancies_sj_processed = len(salaries_sj)
         salary_sj_statistics = {
             'vacancies_found': vacancies_sj_found,
             'vacancies_processed': vacancies_sj_processed,
-            'average_salary': average_sj_salary // page,
+            'average_salary': average_sj_salary,
         }
         vacancies_language_sj[program_language_sj] = salary_sj_statistics
     print(make_table(vacancies_language_sj, title_sj))
